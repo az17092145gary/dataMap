@@ -1,0 +1,540 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+	<symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+		<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+	</symbol>
+	<symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+		<path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+	</symbol>
+</svg>
+
+@*Loading*@
+<div id="holdmodel" class="d-flex justify-content-center" style="align-items:center">
+	<span style="font-weight:900">Loading...</span>
+	<div class="spinner-border" role="status">
+	</div>
+</div>
+
+<table id="AllDataTable" class="table table-Light table-bordered table-hover">
+	<thead class="table-dark">
+		<tr>
+			<th>Match_id</th>
+			<th>Kick_off_time</th>
+			<th>League</th>
+			<th>Home</th>
+			<th>Away</th>
+			<th>全選<input type="checkbox" class="checkbox-f" onchange="checksSelectAll()" /></th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+</table>
+
+<div style="display:flex;justify-content:flex-end;">
+	<input type="button" class="btn btn-primary" value="送出" data-bs-toggle="modal" data-bs-target="#exampleModalSave" />
+</div>
+
+<!-- SaveModal -->
+<div class="modal fade" id="exampleModalSave" tabindex="-1" aria-labelledby="exampleModalSaveLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModalSaveLabel">確認視窗</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				請問確認保存嗎?
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+				<button type="button" id="saveButton" class="btn btn-primary" data-bs-dismiss="modal">確認</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- EditModal -->
+<div class="modal fade" id="exampleModalEdit" tabindex="-1" aria-labelledby="exampleModalEditLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModalEditLabel"></h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+				<button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#exampleModalEditCheck">確認</button>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- Edit Check Modal -->
+<div class="modal fade" id="exampleModalEditCheck" tabindex="-1" aria-labelledby="exampleModalEditCheckLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModalSaveLabel">確認視窗</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				請問確認修改嗎?
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+				<button type="button" id="editcheckButton" data-mpmatchid="" class="btn btn-primary" data-bs-dismiss="modal">確認</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+<!--EditLeagueTable-->
+<div class="modal fade" id="exampleModalEditLeague" tabindex="-1" aria-labelledby="exampleModalEditLeague" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Leagues</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+				<button type="button" onclick="GetleagueAndIdData()" id="EditLeagueTableButton" class="btn btn-primary" data-mptime="" data-bs-dismiss="modal">確認</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Scripts
+	{
+	<script>
+		//暫存Leagues資料
+		var TempDatas = [];
+		var TempLeaguesData = [];
+		//Edit
+		$('#editcheckButton').on('click', function () {
+			$('#exampleModalEdit').modal('hide');
+			var id = null;
+			$('#exampleModalEdit .modal-body tr').each(function () {
+				var row = $(this);
+				if (row.find('.EditTempCheck').prop('checked') === true) {
+					id = row.find('[data-mid]').data('mid');
+					return;
+				}
+			});
+			if(id === null){
+				$('#AllDataTable').before(`<div class="alert alert-danger d-flex align-items-center" role="alert">
+												<svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Danger:"><use xlink:href="#exclamation-triangle-fill" /></svg>
+												<div>
+													未勾選欄位!
+												</div>
+										</div>`);
+				setTimeout(function () {
+					$('.alert-danger').alert('close');
+				}, 2000);
+				return;
+			
+			}
+			else{
+				$('#holdmodel').removeClass('visually-hidden');
+				$.ajax({
+					url: `@Url.Content("~/Home/Edit")`,
+					type: "POST",
+					data: {
+						match_id: $('#editcheckButton').data('mpmatchid'),
+						id: id
+					},
+					success:function(response){
+						displaydata(response);
+						$('#holdmodel').addClass('visually-hidden');
+							$('#AllDataTable').before(`<div class="alert alert-success d-flex align-items-center" role="alert">
+															<svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Success:"><use xlink:href="#check-circle-fill" /></svg>
+															<div>
+																修改完成
+															</div>
+													</div>`);
+							setTimeout(function () {
+								$('.alert-success').alert('close');
+							}, 2000);
+					},
+					error:function(XMLHttpResponce,textStatus){
+						$('#holdmodel').addClass('visually-hidden');
+						$('#AllDataTable').before(`<div class="alert alert-danger d-flex align-items-center" role="alert">
+														<svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Danger:"><use xlink:href="#exclamation-triangle-fill" /></svg>
+														<div>
+															錯誤!請查看log
+														</div>
+												</div>`);
+						setTimeout(function () {
+							$('.alert-danger').alert('close');
+						}, 2000);
+						console.log(XMLHttpResponce.readystate);
+						console.log(textStatus);
+					}
+				});
+			}
+		});
+		$(document).ready(function () {
+			getdata();
+		});
+		function checksSelectAll() {
+			$('.check-s').prop('checked', event.target.checked);
+		}
+		//轉換時間
+		function DateTime(dateTimeString) {
+			const options = {
+				year: 'numeric',
+				month: 'numeric',
+				day: 'numeric',
+				hour: 'numeric',
+				minute: 'numeric',
+				second: 'numeric',
+				hour12: true,
+			};
+			const dateTime = new Date(dateTimeString);
+			return dateTime.toLocaleString('en-US', options);
+		}
+
+		$('#saveButton').on('click', function () {
+			var array = [];
+			$('#AllDataTable tbody tr').each(function () {
+				var row = $(this);
+				if (row.find('.check-s').prop('checked')) {
+					var dataItem =
+					{
+						league_id: row.find('[data-leagueid]').data("leagueid"),
+						home_team_id: row.find('[data-homeid]').data("homeid"),
+						away_team_id: row.find('[data-awayid]').data("awayid"),
+					};
+					array.push(dataItem);
+				}
+			});
+			if (array.length === 0) {
+				$('#AllDataTable').before(`<div class="alert alert-danger d-flex align-items-center" role="alert">
+												<svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Danger:"><use xlink:href="#exclamation-triangle-fill" /></svg>
+												<div>
+													未勾選欄位!
+												</div>
+										</div>`);
+				setTimeout(function () {
+					$('.alert-danger').alert('close');
+				}, 2000);
+				return;
+			}
+			else {
+				$('#holdmodel').removeClass('visually-hidden');
+				$.ajax({
+					url: `@Url.Content("~/Home/Update")`,
+					type: 'POST',
+					contentType: 'application/json; charset=utf-8',
+					data: JSON.stringify(array),
+					success: function (response) {
+						$('.checkbox-f').prop('checked', '');
+						displaydata(response);
+						$('#AllDataTable').before(`<div class="alert alert-success d-flex align-items-center" role="alert">
+														<svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Success:"><use xlink:href="#check-circle-fill" /></svg>
+														<div>
+															修改完成
+														</div>
+												</div>`);
+						setTimeout(function () {
+							$('.alert-success').alert('close');
+						}, 2000);
+					},
+					error: function (XMLHttpRequest, textStatus) {
+						$('#AllDataTable').before(`<div class="alert alert-danger d-flex align-items-center" role="alert">
+														<svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Danger:"><use xlink:href="#exclamation-triangle-fill" /></svg>
+														<div>
+															錯誤!請查看log
+														</div>
+												</div>`);
+						setTimeout(function () {
+							$('.alert-danger').alert('close');
+						}, 2000);
+						console.log(textStatus);
+						console.log(XMLHttpRequest.readyState);
+					}
+				});
+			}
+		});
+		function getdata() {
+			$.ajax({
+				url: `@Url.Content("~/Home/GetDataAll")`,
+				type: 'GET',
+				success: function (responce) {
+					displaydata(responce);
+				},
+				error: function (XMLHttpRequest, textStatus) {
+					console.log(textStatus);
+					console.log(XMLHttpRequest.readyState);
+				}
+			});
+		}
+		function displaydata(datas) {
+			var tableBody = $("#AllDataTable tbody");
+			tableBody.empty();
+			datas.forEach(function (item) {
+				var newRow = $("<tr></tr>");
+				newRow.append(`<td data-mpmatchid="${item.match_id}">${item.match_id}</td>`);
+				newRow.append(`<td data-mptime="${item.kick_off_time}">${DateTime(item.kick_off_time)}</td>`);
+				if (item.leaguecheck === false) {
+					newRow.append(`<td><ul>
+																		<li><span data-leagueid="${item.league_id}" data-leaguecheck="false" style="color:red;font-weight:bold;">${item.league1}</span></li>
+																		<li><span data-mleagueid="${item.mleagueid}">${item.league2}</span></li>
+																</ul></td>`);
+				}
+				else {
+					newRow.append(`<td><ul>
+																		<li><span data-leagueid="${item.league_id}" data-leaguecheck="ture" style="color:green;font-weight:bold;">${item.league1}</span></li>
+																		<li><span data-mleagueid="${item.mleagueid}">${item.league2}</span></li>
+																</ul></td>`);
+				}
+				if (item.homecheck === false) {
+					newRow.append(`<td><ul>
+																		<li><span data-homeid="${item.home_team_id}" data-homecheck="false" style="color:red;font-weight:bold;">${item.home1}</span></li>
+																		<li><span>${item.home2}</span></li>
+																</ul></td>`);
+				}
+				else {
+					newRow.append(`<td><ul>
+																		<li><span data-homeid="${item.home_team_id}" data-homecheck="ture" style="color:green;font-weight:bold;">${item.home1}</span></li>
+																		<li><span>${item.home2}</span></li>
+																</ul></td>`);
+				}
+				if (item.awaycheck === false) {
+					newRow.append(`<td><ul>
+																		<li><span data-awayid="${item.away_team_id}" data-awaycheck="false" style="color:red;font-weight:bold;">${item.away1}</span></li
+																		<li><span>${item.away2}</span></li>
+																</ul></td>`);
+				}
+				else {
+					newRow.append(`<td><ul>
+														<li><span data-awayid="${item.away_team_id}" data-awaycheck="ture" style="color:green;font-weight:bold;">${item.away1}</span></li
+														<li><span>${item.away2}</span></li>
+												</ul></td>`);
+				}
+				newRow.append(`<td><input type="checkbox" class="check-s"/></td>`);
+				newRow.append(`<td><button class="btn btn-secondary editbtn">編輯</button></td>`);
+				tableBody.append(newRow);
+			});
+			//編輯綁定
+			$('.editbtn').on('click', function (e) {
+				var row = $(this).parent().parent();
+				$('#exampleModalEdit .modal-body').empty();
+				EditClick(row);
+				$('#exampleModalEdit').modal('show');
+			});
+			$('#holdmodel').addClass("visually-hidden");
+		}
+		function EditClick(row) {
+			//將mpmatchid綁定
+			$('#editcheckButton').data('mpmatchid', row.find('[data-mpmatchid]').data('mpmatchid'));
+			if (row.find('span').data('leaguecheck')) {
+				$('#exampleModalEdit .modal-body').append(`<div class="card text-white border-dark mb-3 bg-dark" style="max-width: 800px;">
+																				<div class="row g-0">
+																					<div class="row col-md-3 align-items-center" style="border-right-style:dashed;border-width:1px;">
+																						${row.find('[data-mptime]').text()}
+																					</div>
+																					<div class="col-md-8">
+																						<div class="card-body">
+																							<h5 class="card-title">${row.find('[data-leaguecheck]').text()}</h5>
+																							<span class="card-text">${row.find('[data-homecheck]').text()}</span>
+																							<span class="card-text"> vs </span>
+																							<span class="card-text">${row.find('[data-awaycheck]').text()}</span>
+																						</div>
+																					</div>
+																				</div>
+																		</div>`);
+				$('#holdmodel').removeClass('visually-hidden');
+				$.ajax({
+					url: `@Url.Content("~/Home/GetleagueAndIdData")`,
+					type: "POST",
+					data: {
+						id: row.find('[data-mpmatchid]').data('mpmatchid'),
+					},
+					success: function (responce) {
+						$('#exampleModalEdit .modal-body #EditTempTable').remove();
+						var table = $(`<table id="EditTempTable" class="table table-Light table-bordered table-hover" style="max-width:800px;">
+															<thead class="table-dark">
+																<tr>
+																	<th>Kick_off_time</th>
+																	<th>Leagues</th>
+																	<th>Home</th>
+																	<th>Away</th>
+																	<th>勾選</th>
+																</tr>
+															</thead>
+													</table>`);
+						var tbody = $('<tbody></tbody>');
+						responce.forEach(function (item) {
+							var tr = $('<tr></tr>');
+							tr.append(`<td>${DateTime(item.kick_off_time)}</td>`);
+							tr.append(`<td data-leagues-id="${item.leagues_id}">${item.league_name}</td>`);
+							tr.append(`<td data-homeid="${item.home_team_id}">${item.home}</td>`);
+							tr.append(`<td data-awayid="${item.away_team_id}">${item.away}</td>`);
+							tr.append(`<td><input type="checkbox" data-mid="${item.id}" class= "EditTempCheck" /></td>`);
+							tbody.append(tr);
+						});
+						var tr = $(`<tr></tr>`);
+						tr.append(`<td colspan="4" style="text-align: center;" >沒有匹配</td>`);
+						tr.append(`<td><input type="checkbox" data-mid="-1" class= "EditTempCheck" /></td>`);
+						tbody.append(tr);
+						table.append(tbody);
+						$('#exampleModalEdit .modal-body').append(table);
+						$('.EditTempCheck').on('change', EditTempCheckCanCelOther);
+						$('#holdmodel').addClass('visually-hidden');
+					},
+					error: function (XMLHttpRequest, textStatus) {
+						console.log(textStatus);
+						console.log(XMLHttpRequest.readyState);
+						$('#holdmodel').addClass('visually-hidden');
+					}
+				});
+			}
+			//Leagues錯誤
+			else {
+				$('#exampleModalEdit .modal-body').append(`<div class="card text-white border-dark mb-3 bg-dark" style="max-width: 800px;">
+																				<div class="row g-0">
+																					<div class="row col-md-3 align-items-center" style="border-right-style:dashed;border-width:1px;">
+																						${row.find('[data-mptime]').text()}
+																					</div>
+																					<div class="col-md-8">
+																						<div class="card-body">
+																							<h5 class="card-title">${row.find('[data-leaguecheck]').text()}</h5>
+																							<span class="card-text">${row.find('[data-homecheck]').text()}</span>
+																							<span class="card-text"> vs </span>
+																							<span class="card-text">${row.find('[data-awaycheck]').text()}</span>
+																						</div>
+																					</div>
+																				</div>
+																		</div>`
+				);
+				$('#exampleModalEditLeague .modal-title').text(row.find('[data-leaguecheck]').text());
+				$('#holdmodel').removeClass('visually-hidden');
+				$.ajax({
+					url: `@Url.Content("~/Home/GetleagueAndIdData")`,
+					type: "POST",
+					data: {
+						id: row.find('[data-mpmatchid]').data('mpmatchid')
+					},
+					success: function (responce) {
+						//複選Leagues
+						$('#exampleModalEdit .modal-body').append($(`<Button id="exampleModalEditLeagueButton" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#exampleModalEditLeague">League</Button>`));
+						$('#EditLeagueTable').remove();
+						var table = $(`<table id="EditLeagueTable" class="table table-Light table-bordered table-hover" style="max-width:450px;">
+															<thead class="table-dark">
+																<tr>
+																	<th>league</th>
+																	<th>全選<input type="checkbox" Onchange="LeagueTableCheckBoxChange()" checked /></th>
+																</tr>
+															</thead>
+													</table>`);
+						var tbody = $(`<tbody></tbody>`);
+						TempDatas = responce;
+						$.each(responce, function (index, value) {
+							if (($.inArray(value.league_name, TempLeaguesData.map(item => item.league_name)) < 0) && ($.inArray(value.leagues_id, TempLeaguesData.map(item => item.leagues_id)) < 0)) {
+								var data = {
+									league_name: value.league_name,
+									leagues_id: value.leagues_id
+								};
+								TempLeaguesData.push(data);
+							}
+						});
+						TempLeaguesData.forEach(function (item) {
+							var tr = $(`<tr></tr>`);
+							tr.append($(`<td data-leagues_id="${item.leagues_id}">${item.league_name}</td>`));
+							tr.append($(`<td><input type="checkBox" class="LeagueTableCheckBox" checked /></td>`))
+							tbody.append(tr);
+						});
+						table.append(tbody);
+						$('#exampleModalEditLeague .modal-body').append(table);
+						GetleagueAndIdData();
+						$('#holdmodel').addClass('visually-hidden');
+					},
+					error: function (XMLHttpRequest, textStatus) {
+						console.log(XMLHttpRequest.readyState);
+						console.log(textStatus);
+						$('#holdmodel').addClass('visually-hidden');
+					}
+				});
+			}
+		}
+		function GetleagueAndIdData() {
+			$('#holdmodel').removeClass('visually-hidden');
+			var array = [];
+			$('#EditLeagueTable tbody tr').each(function () {
+				var row = $(this);
+				if (row.find('.LeagueTableCheckBox').prop('checked')) {
+					array.push(row.find('[data-leagues_id]').data('leagues_id'));
+				}
+			});
+			if (array.length === 0) {
+				$('#holdmodel').addClass('visually-hidden');
+				$('#exampleModalEdit').prepend(`<div class="alert alert-danger d-flex align-items-center" role="alert">
+																	<svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Danger:"><use xlink:href="#exclamation-triangle-fill" /></svg>
+																	<div>
+																		未勾選欄位!
+																	</div>
+															</div>`);
+				setTimeout(function () {
+					$('.alert-danger').alert('close');
+				}, 2000);
+				return;
+			}
+			else {
+				$('#EditTempTable').remove();
+				var table = $(`<table id="EditTempTable" class="table table-Light table-bordered table-hover table-responsive" style="max-width:800px;">
+													<thead class="table-dark">
+														<tr>
+															<th>Kick_off_time</th>
+															<th>Leagues</th>
+															<th>Home</th>
+															<th>Away</th>
+															<th>勾選</th>
+														</tr>
+													</thead>
+											</table>`);
+				var tbody = $('<tbody></tbody>');
+				array.forEach(function (arrayitem) {
+					TempDatas.forEach(function (item) {
+						if (arrayitem === item.leagues_id) {
+							var tr = $('<tr></tr>');
+							tr.append(`<td>${DateTime(item.kick_off_time)}</td>`);
+							tr.append(`<td data-leagues-id="${item.leagues_id}">${item.league_name}</td>`);
+							tr.append(`<td data-homeid="${item.home_team_id}">${item.home}</td>`);
+							tr.append(`<td data-awayid="${item.away_team_id}">${item.away}</td>`);
+							tr.append(`<td><input data-mid="${item.id}" type="checkbox" class= "EditTempCheck" /></td>`);
+							tbody.append(tr);
+						}
+					});
+				});
+				var tr = $(`<tr></tr>`);
+				tr.append(`<td colspan="4" style="text-align: center;" >沒有匹配</td>`);
+				tr.append(`<td><input data-mid="-1" type="checkbox" class= "EditTempCheck" /></td>`);
+				tbody.append(tr);
+				table.append(tbody);
+				$('#exampleModalEdit .modal-body').append(table);
+				$('.EditTempCheck').on('change', EditTempCheckCanCelOther);
+				$('#holdmodel').addClass('visually-hidden');
+			};
+		}
+		function LeagueTableCheckBoxChange() {
+			$('.LeagueTableCheckBox').prop('checked', event.target.checked);
+		}
+		function EditTempCheckCanCelOther() {
+			if ($(this).prop('checked') === true) {
+				$('.EditTempCheck').prop('checked', false);
+				$(this).prop('checked', true);
+			}
+		}
+		function LeagueTableCheckBoxCanCelOther(e) {
+			if ($(e).prop('checked') === true) {
+				$('.LeagueTableCheckBox').prop('checked', false);
+				$(e).prop('checked', true);
+			}
+		}
+	</script>
+}
